@@ -18,7 +18,7 @@ resource "aws_alb_target_group" "ecs_target_group" {
     port                = 80
     healthy_threshold   = 3
     interval            = 30
-    protocol            = "HTTP"
+    protocol            = "HTTPS"
     matcher             = "200"
     timeout             = "3"
     unhealthy_threshold = "2"
