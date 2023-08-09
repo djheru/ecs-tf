@@ -15,10 +15,10 @@ resource "aws_alb_target_group" "ecs_target_group" {
 
   health_check {
     path                = "/"
-    port                = 80
+    port                = "traffic-port"
     healthy_threshold   = 3
     interval            = 30
-    protocol            = "HTTPS"
+    protocol            = "HTTP"
     matcher             = "200"
     timeout             = "3"
     unhealthy_threshold = "2"
@@ -43,7 +43,12 @@ resource "aws_alb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = aws_alb_target_group.ecs_target_group.arn
-    type             = "forward"
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+      path        = "/#{path}"
+    }
   }
 }
