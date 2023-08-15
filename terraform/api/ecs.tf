@@ -1,3 +1,7 @@
+data "aws_cognito_user_pools" "media_cloud_user_pool" {
+  name = var.cognito_user_pool_name
+}
+
 resource "aws_ecs_cluster" "ecs_cluster" {
   name = "${var.app_name}-ecs-cluster"
 }
@@ -71,7 +75,7 @@ resource "aws_ecs_task_definition" "ecs_main_task" {
       },
       {
         name  = "AWS_REGION",
-        value = "us-east-1"
+        value = var.region
       },
       {
         name  = "COMMAND",
@@ -95,11 +99,11 @@ resource "aws_ecs_task_definition" "ecs_main_task" {
       },
       {
         name  = "SECURITY_GROUPS",
-        value = "sg-0461c533906198b33"
+        value = var.iac_security_group
       },
       {
         name  = "VPC_SUBNETS",
-        value = "subnet-0ece2a8767f8070cd"
+        value = var.iac_subnet
       },
       {
         name  = "NO_COLOR",
@@ -107,7 +111,15 @@ resource "aws_ecs_task_definition" "ecs_main_task" {
       },
       {
         name  = "NAME"
-        value = "polaris-api"
+        value = var.app_name
+      },
+      {
+        name  = "USER_POOL_ID"
+        value = data.aws_cognito_user_pools.media_cloud_user_pool.ids[0]
+      },
+      {
+        name  = "ENABLE_AUTHENTICATION",
+        value = "true"
       }
     ]
 
@@ -123,6 +135,19 @@ resource "aws_ecs_task_definition" "ecs_main_task" {
     ]
   }])
 }
+
+resource "aws_ecs_task_definition" "migration_task" {
+  family = "${var.app_name}-task"
+  container_definitions = jsonencode([merge(
+    jsondecode(aws_ecs_task_definition.ecs_main_task.container_definitions)[0],
+    { "command" : ["npm", "run", "migration:run"] }
+  )])
+  requires_compatibilities = aws_ecs_task_definition.ecs_main_task.requires_compatibilities
+  cpu                      = aws_ecs_task_definition.ecs_main_task.cpu
+  memory                   = aws_ecs_task_definition.ecs_main_task.memory
+  network_mode             = aws_ecs_task_definition.ecs_main_task.network_mode
+}
+
 
 resource "aws_cloudwatch_log_group" "ecs_service_log_group" {
   name = var.log_group_name

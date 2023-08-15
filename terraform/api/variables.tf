@@ -72,5 +72,19 @@ variable "environment_name" {
   default = "dev"
 }
 
+variable "cognito_user_pool_name" {
+  type    = string
+  default = "media-cloud-user-pool"
+}
+
+variable "iac_subnet" {
+  type    = string
+  default = "subnet-0ece2a8767f8070cd"
+}
+
+variable "iac_security_group" {
+  type    = string
+  default = "sg-0461c533906198b33"
+}
 
 
